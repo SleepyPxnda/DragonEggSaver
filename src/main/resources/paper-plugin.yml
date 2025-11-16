@@ -1,0 +1,4 @@
+name: DragonEggSaver
+version: '0.1'
+main: de.cloudypanda.dragonEggSaver.DragonEggSaver
+api-version: '1.21'
