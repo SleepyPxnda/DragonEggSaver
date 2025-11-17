@@ -34,7 +34,14 @@ public class DragonEggManager {
 
     public void returnEggToHolder() {
         currentHolder.getInventory().remove(Material.DRAGON_EGG);
-        currentHolder.getInventory().addItem(new ItemStack(Material.DRAGON_EGG, 1));
+        var notFitting = currentHolder.getInventory().addItem(new ItemStack(Material.DRAGON_EGG, 1));
+
+        if(!notFitting.isEmpty()){
+            currentHolder.sendMessage(Component.text("Your inventory was full, the Dragon Egg will be dropped on the ground."));
+            currentHolder.getWorld().dropItemNaturally(currentHolder.getLocation(), notFitting.values().iterator().next());
+            return;
+        }
+
         currentHolder.sendMessage(Component.text("The Dragon Egg has been returned to you!"));
         log.info("Returned Dragon Egg to {}", currentHolder.getName());
     }

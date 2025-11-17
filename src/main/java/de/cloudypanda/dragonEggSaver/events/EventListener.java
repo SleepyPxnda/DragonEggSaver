@@ -101,6 +101,5 @@ public class EventListener implements Listener {
         }
 
         DragonEggSaver.getDragonEggManager().returnEggToHolder();
-        e.setCancelled(true);
     }
 }
