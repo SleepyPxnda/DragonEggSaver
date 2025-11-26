@@ -23,12 +23,12 @@ jobs:
           java-version: '21'
 
       - name: Build with Gradle
-        run: ./gradlew build -Pversion=${{ env.PLUGIN_VERSION }}
+        run: ./gradlew shadowJar -Pversion=${{ env.PLUGIN_VERSION }}
 
       - name: Add Files to Release
         run: |
           cd ${{github.workspace}}/build/libs
-          gh release upload ${{ env.PLUGIN_VERSION }} DragonEggSaver-${{ env.PLUGIN_VERSION }}.jar
+          gh release upload ${{ env.PLUGIN_VERSION }} DragonEggSaver-${{ env.PLUGIN_VERSION }}-all.jar
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         shell: bash
