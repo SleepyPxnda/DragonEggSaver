@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -55,6 +56,14 @@ public class DragonEggManager {
                 var glowingEffect = new PotionEffect(PotionEffectType.GLOWING, 40, 1, false, false, true);
                 player.addPotionEffect(glowingEffect);
             }
+
+            player.getNearbyEntities(player.getX(), player.getY(), player.getZ()).forEach(entity -> {
+               if(entity instanceof Item item){
+                   if(item.getItemStack().getType() == Material.DRAGON_EGG){
+                          item.setGlowing(true);
+                     }
+               }
+            });
         });
     }
 }
