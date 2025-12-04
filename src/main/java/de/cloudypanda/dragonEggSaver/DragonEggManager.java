@@ -66,4 +66,45 @@ public class DragonEggManager {
             });
         });
     }
+
+    public void updateLocatorBarForPlayerTowardsDragonEgg() {
+        Bukkit.getOnlinePlayers().forEach(player -> {
+//            if(isEggHolder(player.getUniqueId())) {
+//                return; // No need to update locator bar for the egg holder
+//            }
+
+            var dragonEggLocation = currentHolder != null ? currentHolder.getLocation() : null;
+            if(dragonEggLocation != null) {
+                var direction = dragonEggLocation.toVector().subtract(player.getLocation().toVector()).normalize();
+                var playerDirection = player.getLocation().getDirection().normalize();
+                var dotProduct = direction.dot(playerDirection);
+                var angle = Math.acos(dotProduct);
+                var crossProduct = direction.clone().crossProduct(playerDirection);
+                if(crossProduct.getY() < 0) {
+                    angle = -angle;
+                }
+                var progress = (angle + Math.PI) / (2 * Math.PI);
+                player.sendActionBar(Component.text("Dragon Egg Direction: " + String.format("%.2f", progress * 100) + "%"));
+            }
+        });
+    }
+
+    public void dropEggAtHolder() {
+        if(currentHolder == null) {
+            log.warn("No current dragon egg holder to drop the egg at.");
+            return;
+        }
+
+        // Drop the dragon egg at the current holder's location
+        var world = currentHolder.getWorld();
+        var location = currentHolder.getLocation();
+        world.getBlockAt(location).setType(Material.DRAGON_EGG, false);
+        log.info("Dropped Dragon Egg at {}", currentHolder.getName());
+
+        // Remove the dragon egg from the current holder's inventory
+        currentHolder.getInventory().remove(Material.DRAGON_EGG);
+
+        // Update Dragonholder
+        this.currentHolder = null;
+    }
 }

@@ -18,6 +18,7 @@ public final class DragonEggSaver extends JavaPlugin {
             @Override
             public void run() {
                 dragonEggManager.updateGlowing();
+                dragonEggManager.updateLocatorBarForPlayerTowardsDragonEgg();
             }
 
         }.runTaskTimer(this, 0, 20); // Run every second (20 ticks)

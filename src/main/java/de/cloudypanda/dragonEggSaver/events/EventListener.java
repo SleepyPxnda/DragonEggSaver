@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
 
@@ -101,5 +102,14 @@ public class EventListener implements Listener {
         }
 
         DragonEggSaver.getDragonEggManager().returnEggToHolder();
+    }
+
+    @EventHandler
+    public void onQuitEvent(PlayerQuitEvent e) {
+        var player = e.getPlayer();
+
+        if(DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())){
+            DragonEggSaver.getDragonEggManager().dropEggAtHolder();
+        }
     }
 }
