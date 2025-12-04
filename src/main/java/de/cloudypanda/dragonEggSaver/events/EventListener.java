@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
@@ -22,16 +23,20 @@ import java.util.List;
 @Slf4j
 public class EventListener implements Listener {
 
-    private final List<InventoryType> allowedInventories = List.of(
-            InventoryType.CRAFTING,
-            InventoryType.CREATIVE,
-            InventoryType.PLAYER
-    );
+    private final List<InventoryType> allowedInventories = List.of(InventoryType.CRAFTING, InventoryType.CREATIVE, InventoryType.PLAYER);
+
+    @EventHandler
+    public void onItemInteractEvent(PlayerInteractEvent event) {
+        if (event.hasItem() && Material.COMPASS.equals(event.getItem().getType())) {
+            event.getPlayer().sendMessage("The Holder ist %.1f Blocks away".formatted(DragonEggSaver.getDragonEggManager().getCurrentHolder() != null ? event.getPlayer().getLocation().distance(DragonEggSaver.getDragonEggManager().getCurrentHolder().getLocation()) : 0));
+            DragonEggSaver.getDragonEggManager().updateCompassToHolder(event.getPlayer());
+        }
+    }
 
     @EventHandler
     public void PlayerPickupItemEvent(EntityPickupItemEvent e) {
-        if(!(e.getEntity() instanceof Player player)) {
-           return;
+        if (!(e.getEntity() instanceof Player player)) {
+            return;
         }
 
         var itemPicked = e.getItem().getItemStack();
@@ -46,11 +51,11 @@ public class EventListener implements Listener {
     public void InventoryClickEvent(InventoryClickEvent e) {
         var player = e.getWhoClicked();
 
-        if(!DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())){
+        if (!DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())) {
             return; //Only handle clicks from the dragon egg holder
         }
 
-        if(allowedInventories.contains(e.getInventory().getType())) {
+        if (allowedInventories.contains(e.getInventory().getType())) {
             return; //Only handle clicks in chest inventories
         }
 
@@ -66,7 +71,7 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    public void EntityRemoveFromWorldEvent(EntityRemoveFromWorldEvent e){
+    public void EntityRemoveFromWorldEvent(EntityRemoveFromWorldEvent e) {
         //No additional handling needed if not an item
         if (!e.getEntityType().equals(EntityType.ITEM)) {
             return;
@@ -87,7 +92,7 @@ public class EventListener implements Listener {
     public void PlayerJoinEvent(org.bukkit.event.player.PlayerJoinEvent e) {
         var player = e.getPlayer();
 
-        if(player.getInventory().contains(Material.DRAGON_EGG)){
+        if (player.getInventory().contains(Material.DRAGON_EGG)) {
             DragonEggSaver.getDragonEggManager().transferHolder(player);
         }
     }
@@ -108,7 +113,7 @@ public class EventListener implements Listener {
     public void onQuitEvent(PlayerQuitEvent e) {
         var player = e.getPlayer();
 
-        if(DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())){
+        if (DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())) {
             DragonEggSaver.getDragonEggManager().dropEggAtHolder();
         }
     }

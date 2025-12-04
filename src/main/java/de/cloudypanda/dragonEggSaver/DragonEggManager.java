@@ -15,6 +15,10 @@ import java.util.UUID;
 
 @Slf4j
 public class DragonEggManager {
+
+    //TODO: Rework this into extra object to track position if no player is holding it
+    //TODO: Rework holder update events
+
     @Getter
     private Player previousHolder;
     @Getter
@@ -22,6 +26,10 @@ public class DragonEggManager {
 
     public boolean isEggHolder(UUID uniqueId) {
         return currentHolder != null && currentHolder.getUniqueId().equals(uniqueId);
+    }
+
+    public void updateCompassToHolder(Player player) {
+        player.setCompassTarget(currentHolder != null ? currentHolder.getLocation() : player.getWorld().getSpawnLocation());
     }
 
     public void transferHolder(Player newHolder) {
@@ -67,24 +75,12 @@ public class DragonEggManager {
         });
     }
 
-    public void updateLocatorBarForPlayerTowardsDragonEgg() {
+    public void updateCompassForOtherPlayers() {
         Bukkit.getOnlinePlayers().forEach(player -> {
-//            if(isEggHolder(player.getUniqueId())) {
-//                return; // No need to update locator bar for the egg holder
-//            }
-
             var dragonEggLocation = currentHolder != null ? currentHolder.getLocation() : null;
             if(dragonEggLocation != null) {
-                var direction = dragonEggLocation.toVector().subtract(player.getLocation().toVector()).normalize();
-                var playerDirection = player.getLocation().getDirection().normalize();
-                var dotProduct = direction.dot(playerDirection);
-                var angle = Math.acos(dotProduct);
-                var crossProduct = direction.clone().crossProduct(playerDirection);
-                if(crossProduct.getY() < 0) {
-                    angle = -angle;
-                }
-                var progress = (angle + Math.PI) / (2 * Math.PI);
-                player.sendActionBar(Component.text("Dragon Egg Direction: " + String.format("%.2f", progress * 100) + "%"));
+                // Set the player's compass target to point towards the dragon egg holder
+                player.setCompassTarget(dragonEggLocation);
             }
         });
     }
