@@ -5,8 +5,8 @@ import de.cloudypanda.dragonEggSaver.DragonEggSaver;
 import de.cloudypanda.dragonEggSaver.Texts;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -21,6 +21,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
 
+import static net.kyori.adventure.text.format.TextColor.color;
+
 @Slf4j
 public class EventListener implements Listener {
 
@@ -29,24 +31,8 @@ public class EventListener implements Listener {
     @EventHandler
     public void onItemInteractEvent(PlayerInteractEvent event) {
         if (event.hasItem() && Material.COMPASS.equals(event.getItem().getType())) {
-            if (DragonEggSaver.getDragonEggManager().getCurrentHolder() == null) {
-                event.getPlayer().sendMessage(Texts.noEggHolder);
-                return;
-            }
-
-            if (DragonEggSaver.getDragonEggManager().isEggHolder(event.getPlayer().getUniqueId())) {
-                event.getPlayer().sendMessage(Texts.selfEggHolder);
-                return;
-            }
-
-            var distanceMessage = Texts.pluginPrefix.append(
-                    Component.text("Das Drachenei ist noch ")
-                            .append(Component.text("%.1f".formatted(event.getPlayer().getLocation().distance(DragonEggSaver.getDragonEggManager().getCurrentHolder().getLocation())), TextColor.color(0x00FF00)))
-                            .append(Component.text(" Blöcke entfernt!"))
-            );
-
-            event.getPlayer().sendMessage(distanceMessage);
-            DragonEggSaver.getDragonEggManager().updateCompassToHolder(event.getPlayer());
+            DragonEggSaver.getDragonEggManager().getDirectionToEgg(event.getPlayer());
+            event.setCancelled(true);
         }
     }
 

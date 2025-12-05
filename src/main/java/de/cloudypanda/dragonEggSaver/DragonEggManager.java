@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -19,39 +20,30 @@ import static net.kyori.adventure.text.format.TextColor.color;
 public class DragonEggManager {
 
     @Getter
-    private Player previousHolder;
-    @Getter
-    private Player currentHolder;
+    private final EggLocation currentEggLocation = new EggLocation();
 
     public boolean isEggHolder(UUID uniqueId) {
-        return currentHolder != null && currentHolder.getUniqueId().equals(uniqueId);
-    }
-
-    public void updateCompassToHolder(Player player) {
-        player.setCompassTarget(currentHolder != null ? currentHolder.getLocation() : player.getWorld().getSpawnLocation());
+        return currentEggLocation.isEggHolder(uniqueId);
     }
 
     public void transferHolder(Player newHolder) {
-        if(newHolder != null) {
-            this.previousHolder = this.currentHolder;
-        }
-
-        this.currentHolder = newHolder;
-        log.info("Dragon Egg holder transferred to {}", currentHolder == null ? "'none'" : currentHolder.getName());
+        currentEggLocation.updatePlayerEggLocation(newHolder);
+        log.info("Dragon Egg holder transferred to {}", newHolder.getName());
     }
 
     public void returnEggToHolder() {
-        currentHolder.getInventory().remove(Material.DRAGON_EGG);
-        var notFitting = currentHolder.getInventory().addItem(new ItemStack(Material.DRAGON_EGG, 1));
+        var holder = currentEggLocation.getCurrentHolder();
+        holder.getInventory().remove(Material.DRAGON_EGG);
+        var notFitting = holder.getInventory().addItem(new ItemStack(Material.DRAGON_EGG, 1));
 
-        if(!notFitting.isEmpty()){
-            currentHolder.sendMessage(Texts.eggDroppedDueToMissingSpace);
-            currentHolder.getWorld().dropItemNaturally(currentHolder.getLocation(), notFitting.values().iterator().next());
+        if (!notFitting.isEmpty()) {
+            holder.sendMessage(Texts.eggDroppedDueToMissingSpace);
+            holder.getWorld().dropItemNaturally(holder.getLocation(), notFitting.values().iterator().next());
             return;
         }
 
-        currentHolder.sendMessage(Texts.eggReturnedToHolder);
-        log.info("Returned Dragon Egg to {}", currentHolder.getName());
+        holder.sendMessage(Texts.eggReturnedToHolder);
+        log.info("Returned Dragon Egg to {}", holder.getName());
     }
 
     public void updateGlowing() {
@@ -65,45 +57,79 @@ public class DragonEggManager {
             }
 
             player.getNearbyEntities(player.getX(), player.getY(), player.getZ()).forEach(entity -> {
-               if(entity instanceof Item item){
-                   if(item.getItemStack().getType() == Material.DRAGON_EGG){
-                          item.setGlowing(true);
-                     }
-               }
+                if (entity instanceof Item item && item.getItemStack().getType() == Material.DRAGON_EGG) {
+                    item.setGlowing(true);
+                }
             });
         });
     }
 
     public void updateCompassForOtherPlayers() {
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            var dragonEggLocation = currentHolder != null ? currentHolder.getLocation() : null;
-            if(dragonEggLocation != null) {
-                // Set the player's compass target to point towards the dragon egg holder
-                player.setCompassTarget(dragonEggLocation);
-            }
-        });
-    }
-
-    public void dropEggAtHolder() {
-        if(currentHolder == null) {
-            log.warn("No current dragon egg holder to drop the egg at.");
+        if (currentEggLocation.getCurrentLocation() == null) {
             return;
         }
 
-        // Drop the dragon egg at the current holder's location
-        var world = currentHolder.getWorld();
-        var location = currentHolder.getLocation();
-        world.getBlockAt(location).setType(Material.DRAGON_EGG, false);
-        log.info("Dropped Dragon Egg at {}", currentHolder.getName());
+        Bukkit.getOnlinePlayers().forEach(player -> player.setCompassTarget(currentEggLocation.getCurrentLocation()));
+    }
 
-        var leaveMessage = Texts.pluginPrefix.append(Component.text("Das Dracheni wurde bei " + currentHolder.getName() + " platziert!", color(120,120,120)));
+    public void dropEggAtHolder() {
+        if (currentEggLocation.getCurrentHolder() != null) {
+            log.info("Dropping Dragon Egg at holder {}", currentEggLocation.getCurrentHolder().getName());
+            currentEggLocation.getCurrentHolder().getInventory().remove(Material.DRAGON_EGG);
 
-        Bukkit.getServer().broadcast(leaveMessage.build());
+            // Drop the dragon egg at the current holder's location
+            var location = currentEggLocation.getCurrentHolder().getLocation();
 
-        // Remove the dragon egg from the current holder's inventory
-        currentHolder.getInventory().remove(Material.DRAGON_EGG);
+            var world = currentEggLocation.getCurrentHolder().getWorld();
+            world.getBlockAt(location).setType(Material.DRAGON_EGG, false);
 
-        // Update Dragonholder
-        this.currentHolder = null;
+            log.info("Dropped Dragon Egg at {}", currentEggLocation.getCurrentHolder().getName());
+
+            var leaveMessage = Texts.pluginPrefix.append(Component.text("Das Drachenei wurde bei " + currentEggLocation.getCurrentHolder().getName() + " platziert!", color(120, 120, 120)));
+
+            Bukkit.getServer().broadcast(leaveMessage);
+            currentEggLocation.updateOfflineLocation(location.clone());
+        }
+    }
+
+    public void getDirectionToEgg(Player player) {
+        if (currentEggLocation.getCurrentLocation() == null) {
+            player.sendMessage(Texts.noEggHolder);
+            log.info("Player {} tried to use compass, but no egg holder is set", player.getName());
+            return;
+        }
+
+        if (DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())) {
+            player.sendMessage(Texts.selfEggHolder);
+            return;
+        }
+
+        if(!player.getWorld().equals(currentEggLocation.getCurrentLocation().getWorld())) {
+            var distanceMessage = Texts.pluginPrefix.append(
+                    Component.text("Das Drachenei ist in der Welt " + currentEggLocation.getCurrentHolder().getWorld().getName() + "!", color(0x00FF00))
+            );
+            player.sendMessage(distanceMessage);
+            return;
+        }
+
+        if(player.getWorld().getEnvironment() == World.Environment.NETHER){
+            var x = currentEggLocation.getCurrentLocation().getX();
+            var z = currentEggLocation.getCurrentLocation().getZ();
+            var y = currentEggLocation.getCurrentLocation().getY();
+
+            var distanceMessage = Texts.pluginPrefix.append(
+                    Component.text("Das Drachenei ist bei ")
+                            .append(Component.text("x %.1f | y %.1f | z %.1f".formatted(x, y, z), color(0x00FF00)))
+            );
+            player.sendMessage(distanceMessage);
+            return;
+        }
+
+        var distanceMessage = Texts.pluginPrefix.append(
+                Component.text("Das Drachenei ist noch ")
+                        .append(Component.text("%.1f".formatted(player.getLocation().distance(currentEggLocation.getCurrentLocation())), color(0x00FF00)))
+                        .append(Component.text(" Blöcke entfernt!"))
+        );
+        player.sendMessage(distanceMessage);
     }
 }
