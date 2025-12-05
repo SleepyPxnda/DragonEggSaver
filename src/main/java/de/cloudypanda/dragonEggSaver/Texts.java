@@ -38,4 +38,8 @@ public final class Texts {
     public static final TextComponent eggResetToEndspawn = pluginPrefix.append(
             Component.text("Das Drachenei wurde zum End-Spawn zurückgesetzt!").color(TextColor.color(50, 205, 50))
     );
+
+    public static final TextComponent playerWithEggDied = pluginPrefix.append(
+            Component.text("Der Spieler mit dem Drachenei ist gestorben! Das Ei wurde fallengelassen.").color(TextColor.color(255, 69, 0))
+    );
 }

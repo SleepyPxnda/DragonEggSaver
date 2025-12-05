@@ -126,9 +126,6 @@ public class DragonEggManager {
 
         log.info("Dropped Dragon Egg at {}", player.getName());
 
-        var leaveMessage = Texts.pluginPrefix.append(Component.text("Das Drachenei wurde bei " + player.getName() + " platziert!", color(120, 120, 120)));
-
-        Bukkit.getServer().broadcast(leaveMessage);
         currentEggLocation.updateOfflineLocation(location.clone());
     }
 

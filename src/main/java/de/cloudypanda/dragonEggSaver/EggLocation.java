@@ -66,6 +66,7 @@ public class EggLocation {
 
     public boolean isEggHolder(UUID uuid) {
         return this.player != null
+                && this.player.getHolder() != null
                 && this.player.getHolder().getUniqueId() == uuid
                 && this.player.isActive();
     }
