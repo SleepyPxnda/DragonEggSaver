@@ -106,7 +106,7 @@ public class DragonEggManager {
 
         if(!player.getWorld().equals(currentEggLocation.getCurrentLocation().getWorld())) {
             var distanceMessage = Texts.pluginPrefix.append(
-                    Component.text("Das Drachenei ist in der Welt " + currentEggLocation.getCurrentHolder().getWorld().getName() + "!", color(0x00FF00))
+                    Component.text("Das Drachenei ist in der Welt " + currentEggLocation.getCurrentLocation().getWorld().getName() + "!", color(0x00FF00))
             );
             player.sendMessage(distanceMessage);
             return;
