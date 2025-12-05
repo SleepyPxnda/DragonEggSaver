@@ -1,17 +1,11 @@
 package de.cloudypanda.dragonEggSaver;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
-
-class EggHolder<T> {
-    @Getter @Setter private T holder = null;
-    @Getter @Setter private boolean active = false;
-}
 
 @Slf4j
 public class EggLocation {

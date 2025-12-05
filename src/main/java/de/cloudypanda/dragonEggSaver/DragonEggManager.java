@@ -77,6 +77,7 @@ public class DragonEggManager {
             return;
         }
 
+        setHolder(holder);
         holder.sendMessage(Texts.eggReturnedToHolder);
         log.info("Returned Dragon Egg to {}", holder.getName());
     }

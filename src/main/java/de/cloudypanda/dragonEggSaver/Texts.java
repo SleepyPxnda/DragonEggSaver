@@ -34,4 +34,8 @@ public final class Texts {
     public static final TextComponent eggReturnedToHolder = pluginPrefix.append(
             Component.text("Das Drachenei kam zurück zu seinem Besitzer!").color(TextColor.color(50, 205, 50))
     );
+
+    public static final TextComponent eggResetToEndspawn = pluginPrefix.append(
+            Component.text("Das Drachenei wurde zum End-Spawn zurückgesetzt!").color(TextColor.color(50, 205, 50))
+    );
 }

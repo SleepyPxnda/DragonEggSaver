@@ -4,7 +4,13 @@ import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import de.cloudypanda.dragonEggSaver.DragonEggSaver;
 import de.cloudypanda.dragonEggSaver.Texts;
 import lombok.extern.slf4j.Slf4j;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -13,6 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -32,6 +39,37 @@ public class EventListener implements Listener {
             DragonEggSaver.getDragonEggManager().getDirectionToEgg(event.getPlayer());
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onPlayerDeathEvent(PlayerDeathEvent e) {
+        if(!DragonEggSaver.getDragonEggManager().isEggHolder(e.getPlayer().getUniqueId())) return;
+
+        if(e.getDamageSource().getDamageType() != DamageType.OUT_OF_WORLD) return;
+
+        if(!DragonEggSaver.getDragonEggManager().getCurrentEggLocation().getPlayer().isActive()) return;
+
+        e.getPlayer().getInventory().remove(Material.DRAGON_EGG);
+
+        var endWorld = Bukkit.getServer()
+                .getWorlds()
+                .stream()
+                .filter(x -> x.getEnvironment() == World.Environment.THE_END)
+                .findFirst().orElse(null);
+
+        log.info("Found end world: {}", endWorld != null ? endWorld.getName() : "null");
+
+        if(endWorld == null) return;
+
+        var location = new Location(endWorld, 0, 65, 0);
+        location.getBlock().setType(Material.DRAGON_EGG);
+
+        //Prevent Dragon Egg from dropping as item
+        e.getDrops().clear();
+
+        DragonEggSaver.getDragonEggManager().setLocation(location);
+        Bukkit.getServer().broadcast(Texts.eggResetToEndspawn);
+        log.info("Dragon Egg reset to End spawn due to holder {} dying in the void.", e.getPlayer().getName());
     }
 
     @EventHandler
@@ -81,6 +119,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void EntityRemoveFromWorldEvent(EntityRemoveFromWorldEvent e) {
+        log.info("Entity of type {} is being removed from world", e.getEntityType().name());
         //No additional handling needed if not an item
         if (!e.getEntityType().equals(EntityType.ITEM)) {
             return;
@@ -94,7 +133,10 @@ public class EventListener implements Listener {
             return;
         }
 
-        DragonEggSaver.getDragonEggManager().returnEggToHolder();
+        //Player dropped it into the void
+        if(DragonEggSaver.getDragonEggManager().getCurrentEggLocation().getLocation().isActive()){
+            DragonEggSaver.getDragonEggManager().returnEggToHolder();
+        }
     }
 
     @EventHandler
@@ -109,6 +151,11 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onPlayerDropEvent(PlayerDropItemEvent e) {
+        log.info("Player {} dropped an item", e.getPlayer().getName());
+        if(e.getPlayer().getHealth() == 0) {
+            return; //Skip drop handling on death
+        }
+
         var player = e.getPlayer();
 
         if (!DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())) return;
