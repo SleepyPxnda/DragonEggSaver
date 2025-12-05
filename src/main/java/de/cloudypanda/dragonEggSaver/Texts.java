@@ -8,7 +8,7 @@ public final class Texts {
     private Texts() {}
 
     public static final TextComponent pluginPrefix = Component.text()
-            .color(TextColor.color(50, 205, 50))
+            .color(TextColor.color(160,32,240))
             .append(Component.text("End-Event | ").color(TextColor.color(50, 205, 50))).build();
 
     public static final TextComponent cannotMoveEggToInventory = pluginPrefix.append(
