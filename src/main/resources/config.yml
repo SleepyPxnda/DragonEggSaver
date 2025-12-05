@@ -1,4 +1,6 @@
-currentPlayerId: null
+currentPlayer:
+  active: false
+  uuid: "00000000-0000-0000-0000-000000000000"
 currentLocation:
     active: false
     x: 0

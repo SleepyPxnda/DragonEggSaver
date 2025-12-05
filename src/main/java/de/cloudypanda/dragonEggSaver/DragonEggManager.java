@@ -58,17 +58,16 @@ public class DragonEggManager {
     public void setHolder(Player newHolder) {
         currentEggLocation.updatePlayerEggLocation(newHolder);
         updateCompassForOtherPlayers();
-        log.info("Dragon Egg holder transferred to {}", newHolder.getName());
     }
 
     public void setLocation(Location newLocation) {
         currentEggLocation.updateOfflineLocation(newLocation);
         updateCompassForOtherPlayers();
-        log.info("Dragon Egg location set to x:{} y:{} z:{} in world {}", newLocation.getBlockX(), newLocation.getBlockY(), newLocation.getBlockZ(), newLocation.getWorld().getName());
     }
 
     public void returnEggToHolder() {
-        var holder = currentEggLocation.getCurrentHolder();
+        //This will be the old owner before he dropped it into the void
+        var holder = currentEggLocation.getPlayer().getHolder();
         holder.getInventory().remove(Material.DRAGON_EGG);
         var notFitting = holder.getInventory().addItem(new ItemStack(Material.DRAGON_EGG, 1));
 
@@ -109,23 +108,27 @@ public class DragonEggManager {
     }
 
     public void placeEggAtHolderLocationAndRemoveFromInventory() {
-        if (currentEggLocation.getCurrentHolder() != null) {
-            log.info("Dropping Dragon Egg at holder {}", currentEggLocation.getCurrentHolder().getName());
-            currentEggLocation.getCurrentHolder().getInventory().remove(Material.DRAGON_EGG);
+        var playerHolder = currentEggLocation.getPlayer();
 
-            // Drop the dragon egg at the current holder's location
-            var location = currentEggLocation.getCurrentHolder().getLocation();
+        if(!playerHolder.isActive()) return;
 
-            var world = currentEggLocation.getCurrentHolder().getWorld();
-            world.getBlockAt(location).setType(Material.DRAGON_EGG, false);
+        var player = playerHolder.getHolder();
 
-            log.info("Dropped Dragon Egg at {}", currentEggLocation.getCurrentHolder().getName());
+        log.info("Dropping Dragon Egg at holder {}", player.getName());
+        player.getInventory().remove(Material.DRAGON_EGG);
 
-            var leaveMessage = Texts.pluginPrefix.append(Component.text("Das Drachenei wurde bei " + currentEggLocation.getCurrentHolder().getName() + " platziert!", color(120, 120, 120)));
+        // Drop the dragon egg at the current holder's location
+        var location = player.getLocation();
 
-            Bukkit.getServer().broadcast(leaveMessage);
-            currentEggLocation.updateOfflineLocation(location.clone());
-        }
+        var world = player.getWorld();
+        world.getBlockAt(location).setType(Material.DRAGON_EGG, false);
+
+        log.info("Dropped Dragon Egg at {}", player.getName());
+
+        var leaveMessage = Texts.pluginPrefix.append(Component.text("Das Drachenei wurde bei " + player.getName() + " platziert!", color(120, 120, 120)));
+
+        Bukkit.getServer().broadcast(leaveMessage);
+        currentEggLocation.updateOfflineLocation(location.clone());
     }
 
     public void getDirectionToEgg(Player player) {
