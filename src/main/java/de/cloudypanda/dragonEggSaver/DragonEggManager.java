@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Item;
@@ -22,13 +23,46 @@ public class DragonEggManager {
     @Getter
     private final EggLocation currentEggLocation = new EggLocation();
 
+    public DragonEggManager(UUID uuid, boolean active, int x, int y, int z, String worldName) {
+        if(uuid != null){
+            var player = Bukkit.getPlayer(uuid);
+            if (player != null) {
+                currentEggLocation.updatePlayerEggLocation(player);
+                log.info("Loaded dragon egg holder: {}", player.getName());
+                return;
+            } else {
+                log.warn("Player with UUID {} not found while loading egg holder!", uuid);
+            }
+            return;
+        }
+
+        if(active){
+            var world = Bukkit.getWorld(worldName);
+            if (world == null) {
+                log.warn("World {} not found while loading egg location!", worldName);
+                return;
+            }
+
+            var location = new Location(world, x, y, z);
+            currentEggLocation.updateOfflineLocation(location);
+            log.info("Loaded dragon egg location at x:{} y:{} z:{} in world {}", x, y, z, worldName);
+            return;
+        }
+        log.info("No dragon egg holder or location found during load.");
+    }
+
     public boolean isEggHolder(UUID uniqueId) {
         return currentEggLocation.isEggHolder(uniqueId);
     }
 
-    public void transferHolder(Player newHolder) {
+    public void setHolder(Player newHolder) {
         currentEggLocation.updatePlayerEggLocation(newHolder);
         log.info("Dragon Egg holder transferred to {}", newHolder.getName());
+    }
+
+    public void setLocation(Location newLocation) {
+        currentEggLocation.updateOfflineLocation(newLocation);
+        log.info("Dragon Egg location set to x:{} y:{} z:{} in world {}", newLocation.getBlockX(), newLocation.getBlockY(), newLocation.getBlockZ(), newLocation.getWorld().getName());
     }
 
     public void returnEggToHolder() {
@@ -72,7 +106,7 @@ public class DragonEggManager {
         Bukkit.getOnlinePlayers().forEach(player -> player.setCompassTarget(currentEggLocation.getCurrentLocation()));
     }
 
-    public void dropEggAtHolder() {
+    public void placeEggAtHolderLocationAndRemoveFromInventory() {
         if (currentEggLocation.getCurrentHolder() != null) {
             log.info("Dropping Dragon Egg at holder {}", currentEggLocation.getCurrentHolder().getName());
             currentEggLocation.getCurrentHolder().getInventory().remove(Material.DRAGON_EGG);

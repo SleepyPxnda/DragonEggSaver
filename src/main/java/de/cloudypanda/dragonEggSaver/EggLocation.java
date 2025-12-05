@@ -35,11 +35,22 @@ public class EggLocation {
     public void updatePlayerEggLocation(Player newHolder) {
         this.currentHolder = newHolder;
         this.location = null;
+        DragonEggSaver.getInstance().getConfig().set("currentPlayerId", newHolder.getUniqueId().toString());
+        DragonEggSaver.getInstance().getConfig().set("currentLocation.active", false);
+        DragonEggSaver.getInstance().saveConfig();
     }
 
     public void updateOfflineLocation(Location newLocation) {
         this.location = newLocation;
         this.currentHolder = null;
+        DragonEggSaver.getInstance().getConfig().set("currentLocation.active", true);
+        DragonEggSaver.getInstance().getConfig().set("currentLocation.x", newLocation.getBlockX());
+        DragonEggSaver.getInstance().getConfig().set("currentLocation.y", newLocation.getBlockY());
+        DragonEggSaver.getInstance().getConfig().set("currentLocation.z", newLocation.getBlockZ());
+        DragonEggSaver.getInstance().getConfig().set("currentLocation.world", newLocation.getWorld().getName());
+
+        DragonEggSaver.getInstance().getConfig().set("currentPlayerId", null);
+        DragonEggSaver.getInstance().saveConfig();
     }
 
     public boolean isEggHolder(UUID uuid) {
