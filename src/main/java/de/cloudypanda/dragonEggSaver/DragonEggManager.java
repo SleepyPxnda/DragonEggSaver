@@ -13,11 +13,10 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.UUID;
 
+import static net.kyori.adventure.text.format.TextColor.color;
+
 @Slf4j
 public class DragonEggManager {
-
-    //TODO: Rework this into extra object to track position if no player is holding it
-    //TODO: Rework holder update events
 
     @Getter
     private Player previousHolder;
@@ -46,12 +45,12 @@ public class DragonEggManager {
         var notFitting = currentHolder.getInventory().addItem(new ItemStack(Material.DRAGON_EGG, 1));
 
         if(!notFitting.isEmpty()){
-            currentHolder.sendMessage(Component.text("Your inventory was full, the Dragon Egg will be dropped on the ground."));
+            currentHolder.sendMessage(Texts.eggDroppedDueToMissingSpace);
             currentHolder.getWorld().dropItemNaturally(currentHolder.getLocation(), notFitting.values().iterator().next());
             return;
         }
 
-        currentHolder.sendMessage(Component.text("The Dragon Egg has been returned to you!"));
+        currentHolder.sendMessage(Texts.eggReturnedToHolder);
         log.info("Returned Dragon Egg to {}", currentHolder.getName());
     }
 
@@ -96,6 +95,10 @@ public class DragonEggManager {
         var location = currentHolder.getLocation();
         world.getBlockAt(location).setType(Material.DRAGON_EGG, false);
         log.info("Dropped Dragon Egg at {}", currentHolder.getName());
+
+        var leaveMessage = Texts.pluginPrefix.append(Component.text("Das Dracheni wurde bei " + currentHolder.getName() + " platziert!", color(120,120,120)));
+
+        Bukkit.getServer().broadcast(leaveMessage.build());
 
         // Remove the dragon egg from the current holder's inventory
         currentHolder.getInventory().remove(Material.DRAGON_EGG);

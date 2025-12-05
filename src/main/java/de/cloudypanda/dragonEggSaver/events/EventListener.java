@@ -2,6 +2,7 @@ package de.cloudypanda.dragonEggSaver.events;
 
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent;
 import de.cloudypanda.dragonEggSaver.DragonEggSaver;
+import de.cloudypanda.dragonEggSaver.Texts;
 import lombok.extern.slf4j.Slf4j;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -13,9 +14,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ItemDespawnEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
@@ -28,7 +29,23 @@ public class EventListener implements Listener {
     @EventHandler
     public void onItemInteractEvent(PlayerInteractEvent event) {
         if (event.hasItem() && Material.COMPASS.equals(event.getItem().getType())) {
-            event.getPlayer().sendMessage("The Holder ist %.1f Blocks away".formatted(DragonEggSaver.getDragonEggManager().getCurrentHolder() != null ? event.getPlayer().getLocation().distance(DragonEggSaver.getDragonEggManager().getCurrentHolder().getLocation()) : 0));
+            if (DragonEggSaver.getDragonEggManager().getCurrentHolder() == null) {
+                event.getPlayer().sendMessage(Texts.noEggHolder);
+                return;
+            }
+
+            if (DragonEggSaver.getDragonEggManager().isEggHolder(event.getPlayer().getUniqueId())) {
+                event.getPlayer().sendMessage(Texts.selfEggHolder);
+                return;
+            }
+
+            var distanceMessage = Texts.pluginPrefix.append(
+                    Component.text("Das Drachenei ist noch ")
+                            .append(Component.text("%.1f".formatted(event.getPlayer().getLocation().distance(DragonEggSaver.getDragonEggManager().getCurrentHolder().getLocation())), TextColor.color(0x00FF00)))
+                            .append(Component.text(" Blöcke entfernt!"))
+            );
+
+            event.getPlayer().sendMessage(distanceMessage);
             DragonEggSaver.getDragonEggManager().updateCompassToHolder(event.getPlayer());
         }
     }
@@ -66,7 +83,7 @@ public class EventListener implements Listener {
             return;
         }
 
-        player.sendMessage(Component.text("You cannot move the Dragon Egg to any Inventory").color(TextColor.color(255, 0, 0)));
+        player.sendMessage(Texts.cannotMoveEggToInventory);
         e.setCancelled(true);
     }
 
@@ -89,11 +106,12 @@ public class EventListener implements Listener {
     }
 
     @EventHandler
-    public void PlayerJoinEvent(org.bukkit.event.player.PlayerJoinEvent e) {
+    public void PlayerJoinEvent(PlayerJoinEvent e) {
         var player = e.getPlayer();
 
         if (player.getInventory().contains(Material.DRAGON_EGG)) {
             DragonEggSaver.getDragonEggManager().transferHolder(player);
+            log.info("Transferred Dragon Egg holder to {} on join", player.getName());
         }
     }
 
@@ -116,5 +134,17 @@ public class EventListener implements Listener {
         if (DragonEggSaver.getDragonEggManager().isEggHolder(player.getUniqueId())) {
             DragonEggSaver.getDragonEggManager().dropEggAtHolder();
         }
+    }
+
+    @EventHandler
+    public void onInventoryPickupItemEvent(InventoryPickupItemEvent e) {
+        var item = e.getItem().getItemStack();
+
+        //Disable dragon egg from being picked up when dropped
+        if (!Material.DRAGON_EGG.equals(item.getType())) {
+            return;
+        }
+
+        e.setCancelled(true);
     }
 }
