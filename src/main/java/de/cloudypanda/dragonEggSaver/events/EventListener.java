@@ -21,8 +21,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
 
-import static net.kyori.adventure.text.format.TextColor.color;
-
 @Slf4j
 public class EventListener implements Listener {
 
@@ -40,8 +38,7 @@ public class EventListener implements Listener {
     public void onBlockPlaceEvent(BlockPlaceEvent event) {
         if (Material.DRAGON_EGG.equals(event.getBlockPlaced().getType())) {
             // Prevent placing the dragon egg block
-            event.getPlayer().sendMessage(Texts.noPlace);
-            event.setCancelled(true);
+            DragonEggSaver.getDragonEggManager().setLocation(event.getBlockPlaced().getLocation());
         }
     }
 

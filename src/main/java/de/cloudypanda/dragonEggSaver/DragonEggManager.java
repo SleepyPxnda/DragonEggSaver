@@ -57,11 +57,13 @@ public class DragonEggManager {
 
     public void setHolder(Player newHolder) {
         currentEggLocation.updatePlayerEggLocation(newHolder);
+        updateCompassForOtherPlayers();
         log.info("Dragon Egg holder transferred to {}", newHolder.getName());
     }
 
     public void setLocation(Location newLocation) {
         currentEggLocation.updateOfflineLocation(newLocation);
+        updateCompassForOtherPlayers();
         log.info("Dragon Egg location set to x:{} y:{} z:{} in world {}", newLocation.getBlockX(), newLocation.getBlockY(), newLocation.getBlockZ(), newLocation.getWorld().getName());
     }
 
